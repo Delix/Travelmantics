@@ -1,7 +1,5 @@
 package com.example.travelmantics;
 
-import java.io.Serializable;
-
 public class Offers
 {
     private String id;
@@ -9,6 +7,7 @@ public class Offers
     private String Description;
     private String Price;
     private String Imageurl;
+    private String name;
 
 
     public Offers()
@@ -17,12 +16,13 @@ public class Offers
     }
 
 
-    public Offers(String id, String title, String description, String price, String imageurl) {
-        this.id = id;
+    public Offers( String title, String description, String price, String imageurl, String name) {
+
         Title = title;
         Description = description;
         Price = price;
         Imageurl = imageurl;
+        this.name = name;
     }
 
     public String getTitle() {
@@ -63,5 +63,13 @@ public class Offers
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

@@ -14,6 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.storage.StorageReference;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder>
 {
@@ -43,13 +44,14 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder>
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position)
     {
+        StorageReference name = firebaseUtil.getImage(firebaseUtil.list.get(position).getName());
 
         holder.Title.setText(firebaseUtil.list.get(position).getTitle());
         holder.price.setText(firebaseUtil.list.get(position).getPrice());
         holder.Descri.setText(firebaseUtil.list.get(position).getDescription());
-        Glide
-                .with(activity)
-                .load(firebaseUtil.list.get(position).getImageurl())
+
+       Glide     .with(activity)
+                .load(name)
                 .into(holder.image);
 
     }

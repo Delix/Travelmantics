@@ -1,6 +1,7 @@
 package com.example.travelmantics;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -9,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuth.AuthStateListener;
@@ -34,8 +36,10 @@ public class FirebaseUtil
 
     private AuthStateListener authStateListener ;
     private FirebaseAuth mAuth = FirebaseAuth.getInstance() ;
-    private StorageReference mStorageRef;
-   // mStorageRef = FirebaseStorage.getInstance().getReference();
+
+    FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
+    StorageReference mStorageRef;
+
 
     private  DatabaseReference reference;
     private  FirebaseDatabase mfirebaseDatabase = FirebaseDatabase.getInstance();
@@ -66,8 +70,11 @@ public class FirebaseUtil
                     if (firebaseAuth.getCurrentUser() == null)
                     {
                         Signin();
-                        Toast.makeText(activity, "Welcome Back", Toast.LENGTH_LONG);
+
+                        Toast.makeText(activity.getBaseContext(), "Welcome Back", Toast.LENGTH_LONG);
                          checkadmin(mAuth.getUid());
+
+
 
                     }
 
@@ -109,9 +116,17 @@ public class FirebaseUtil
                 }
             });
   open = true;
+            ConnectStorage("Deals");
         }
 
 
+
+    }
+
+
+    private void ConnectStorage(String refer)
+    {
+        mStorageRef = firebaseStorage.getReference().child(refer);
 
     }
 
@@ -180,6 +195,20 @@ public class FirebaseUtil
                 });
     }
 
+    public void del(String pos)
+    {
+        reference = mfirebaseDatabase.getReference().child("Traveldeals");
+        reference.child(pos).removeValue();
+
+    }
+    public void update(Offers pos)
+    {
+        reference = mfirebaseDatabase.getReference().child("Traveldeals");
+        reference.child(pos.getId()).setValue(pos);
+
+    }
+
+
 
     public void attachListener()
     {
@@ -196,5 +225,24 @@ public class FirebaseUtil
 
     public void setAdmin(Boolean admin) {
         isAdmin = admin;
+    }
+
+    public void save(Offers offers2)
+    {
+         reference = mfirebaseDatabase.getReference().child("Traveldeals");
+         reference.push().setValue(offers2);
+
+    }
+
+    public void delphoto(Offers offers)
+    {
+      mStorageRef.child(offers.getName()).delete();
+    }
+
+    public StorageReference getImage(String name)
+    {
+          return mStorageRef.child(name);
+
+
     }
 }

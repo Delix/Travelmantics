@@ -33,6 +33,8 @@ public class List extends Fragment
     {
         super.onCreate(savedInstanceState);
 
+        iswitch.settoolbar("List of Deals");
+
 
 
 
