@@ -132,7 +132,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder>
         @Override
         public void onClick(View view)
         {
-            Iswitch.setproduct(getAdapterPosition());
+            Iswitch.setproduct(list.get(getAdapterPosition()));
 
         }
 

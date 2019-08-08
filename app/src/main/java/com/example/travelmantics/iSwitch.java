@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment;
 public interface iSwitch
 {
     FirebaseUtil getlist();
-    void setproduct(int adapterPosition);
+    void setproduct(Offers adapterPosition);
     Menu getMenu();
     Offers getoffer();
     void Upload(Uri dic);

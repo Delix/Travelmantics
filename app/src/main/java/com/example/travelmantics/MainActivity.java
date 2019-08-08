@@ -22,7 +22,6 @@ import com.google.firebase.storage.UploadTask;
 
 public class MainActivity extends AppCompatActivity implements iSwitch {
     FirebaseUtil firebaseUtil = FirebaseUtil.getInstance();
-    Boolean Switch =false;
     Offers offers;
     Offers offers2 = new Offers();
     Menu menu ;
@@ -31,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
     EditText D;
     EditText p;
     Uri imagephoto;
-    int number;
+
     private StorageReference mStorageRef;
 
     @Override
@@ -87,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
 
             case R.id.Del:
 
-                  firebaseUtil.list.remove(number);
+
                   firebaseUtil.del(offers.getId());
                   init();
                 Toast.makeText(this, "Deleted", Toast.LENGTH_LONG).show();
@@ -178,11 +177,10 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
 
 
     @Override
-    public void setproduct(int adapterPosition)
+    public void setproduct(Offers adapterPosition)
     {
         Fragment product = new EditProduct();
-        offers = firebaseUtil.list.get(adapterPosition);
-        number = adapterPosition;
+        offers = adapterPosition;
         Switchfragment(product,true,"View");
     }
 
