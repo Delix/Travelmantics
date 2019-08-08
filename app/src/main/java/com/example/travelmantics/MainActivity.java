@@ -1,12 +1,10 @@
 package com.example.travelmantics;
 
-import android.app.Activity;
-import android.app.Application;
-import android.icu.text.CaseMap;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
@@ -15,13 +13,10 @@ import androidx.fragment.app.FragmentTransaction;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -35,6 +30,8 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
     EditText t;
     EditText D;
     EditText p;
+    Uri imagephoto;
+    int number;
     private StorageReference mStorageRef;
 
     @Override
@@ -44,8 +41,6 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
          toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle("Travelmantics");
-        firebaseUtil.open("Traveldeals",this);
-
         init();
 
     }
@@ -55,6 +50,23 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu, menu);
         this.menu = menu;
+        firebaseUtil.open("Traveldeals",this);
+        menu.findItem(R.id.Save).setVisible(false);
+        menu.findItem(R.id.Del).setVisible(false);
+        if(firebaseUtil.getAdmin() == false)
+        {
+
+            menu.findItem(R.id.newoffer).setVisible(false);
+            menu.findItem(R.id.Save).setVisible(false);
+            menu.findItem(R.id.Del).setVisible(false);
+
+
+        }
+        else
+        {
+
+            menu.findItem(R.id.newoffer).setVisible(true);
+        }
         toolbar.setTitle("Travelmantics");
 
         return true;
@@ -63,14 +75,7 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
-        if(firebaseUtil.getAdmin() == false)
-        {
-            menu.findItem(R.id.newoffer).setVisible(false);
-        }
-        else
-        {
-            menu.findItem(R.id.newoffer).setVisible(true);
-        }
+
 
         switch (item.getItemId())
 
@@ -78,42 +83,50 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
             case R.id.logout:
                 firebaseUtil.Signoff();
 
-                // User chose the "Settings" item, show the app settings UI...
                 return true;
 
             case R.id.Del:
-                // User chose the "Favorite" action, mark the current item
+
+                  firebaseUtil.list.remove(number);
                   firebaseUtil.del(offers.getId());
                   init();
+                Toast.makeText(this, "Deleted", Toast.LENGTH_LONG).show();
 
-                // as a favorite...
                 return true;
 
             case R.id.Save:
 
                 if(getoffer() == null)
                 {
+                    Upload(imagephoto);
 
-                    SaveNewoffer();
-                    Toast.makeText(this.getBaseContext(), "Saved", Toast.LENGTH_LONG);
+                }
+                else
+                    {
+                        if(imagephoto != null)
+                        {
+                            Upload(imagephoto);
+                        }
+                        else
+                            {
+                            offers.setTitle(t.getText().toString());
+                            offers.setDescription(D.getText().toString());
+                            offers.setPrice(p.getText().toString());
+                            firebaseUtil.update(offers);
+                        }
                 }
 
-                offers.setTitle(t.getText().toString());
-                offers.setDescription(D.getText().toString());
-                offers.setPrice(p.getText().toString());
-                firebaseUtil.update(offers);
-                Toast.makeText(this.getBaseContext(), "Saved", Toast.LENGTH_LONG);
+                init();
+                Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show();
 
 
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
                 return true;
 
             case R.id.newoffer:
+
                 Fragment EditProduct = new EditProduct();
-                Switchfragment(EditProduct,true,"",0);
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
+                Switchfragment(EditProduct,true,"View");
+
                 return true;
 
                default:
@@ -131,10 +144,11 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
     @Override
     protected void onResume() {
         super.onResume();
+        firebaseUtil.open("Traveldeals",this);
         firebaseUtil.attachListener();
     }
 
-    private void Switchfragment(Fragment fragment, Boolean back, String tag, int number)
+    private void Switchfragment(Fragment fragment, Boolean back, String tag)
     {
         FragmentTransaction Ft = getSupportFragmentManager().beginTransaction();
 
@@ -144,11 +158,17 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
             Ft.addToBackStack(tag);
         }
         Ft.commit();
+
+
+
+
     }
     void init()
     {
         Fragment list = new List();
-        Switchfragment( list,false,"List",0);
+
+        Switchfragment( list,false,"List");
+
     }
     @Override
     public FirebaseUtil getlist()
@@ -156,18 +176,14 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
         return firebaseUtil;
     }
 
-    @Override
-    public void setswap(Fragment fragment, Boolean back, String tag)
-    {
-        Switchfragment(fragment,back, tag,0);
-    }
 
     @Override
     public void setproduct(int adapterPosition)
     {
         Fragment product = new EditProduct();
         offers = firebaseUtil.list.get(adapterPosition);
-        Switchfragment(product,true,"Product",0);
+        number = adapterPosition;
+        Switchfragment(product,true,"View");
     }
 
     @Override
@@ -199,10 +215,22 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
              @Override
              public void onSuccess(UploadTask.TaskSnapshot taskSnapshot)
              {
-                 String name  = taskSnapshot.getMetadata().getName();
+                 final String name  = taskSnapshot.getMetadata().getName();
                  Task<Uri> url = firebaseUtil.mStorageRef.child(name).getDownloadUrl();
-                 offers.setName(name);
-                 offers.setImageurl(url.toString());
+                 url.addOnSuccessListener(new OnSuccessListener<Uri>() {
+                     @Override
+                     public void onSuccess(Uri uri)
+                     {
+                         offers.setImageurl(uri.toString());
+                         offers.setName(name);
+                         offers.setTitle(t.getText().toString());
+                         offers.setDescription(D.getText().toString());
+                         offers.setPrice(p.getText().toString());
+                         firebaseUtil.update(offers);
+
+                     }
+                 });
+
 
              }
          });
@@ -215,10 +243,21 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
              @Override
              public void onSuccess(UploadTask.TaskSnapshot taskSnapshot)
              {
-                 String name  = taskSnapshot.getMetadata().getName();
+                 final String name  = taskSnapshot.getMetadata().getName();
                  Task<Uri> url = firebaseUtil.mStorageRef.child(name).getDownloadUrl();
-                 offers2.setName(name);
-                 offers2.setImageurl(url.toString());
+                 url.addOnSuccessListener(new OnSuccessListener<Uri>() {
+                     @Override
+                     public void onSuccess(Uri uri)
+                     {
+
+                         offers2.setImageurl(uri.toString());
+                         offers2.setName(name);
+                         SaveNewoffer();
+
+                     }
+                 });
+
+
 
              }
          });
@@ -232,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
         offers2.setTitle(t.getText().toString());
         offers2.setDescription(D.getText().toString());
         offers2.setPrice(p.getText().toString());
+
         firebaseUtil.save(offers2);
 
     }
@@ -261,19 +301,20 @@ public class MainActivity extends AppCompatActivity implements iSwitch {
 
     }
 
+
+
     @Override
-    public StorageReference Image(String name)
+    public void setphoto(Uri dic)
     {
-        return firebaseUtil.getImage(name);
-    }
-
-    void addproduct()
-    {
-        Fragment product = new EditProduct();
-        Switchfragment(product,true,"Product",0);
+        imagephoto = dic;
 
     }
 
 
+    public void showMenu()
+    {
+        supportInvalidateOptionsMenu();
+        invalidateOptionsMenu();
 
+    }
 }

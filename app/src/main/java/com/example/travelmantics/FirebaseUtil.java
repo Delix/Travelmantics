@@ -1,6 +1,7 @@
 package com.example.travelmantics;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
@@ -8,6 +9,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -26,12 +28,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static android.app.Activity.RESULT_OK;
+
 public class FirebaseUtil
 {
     private static final int RC_SIGN_IN = 101 ;
 
-    Activity activity;
-    String refer;
+   private Activity activity;
+    private   String refer;
 
 
     private AuthStateListener authStateListener ;
@@ -41,14 +45,15 @@ public class FirebaseUtil
     StorageReference mStorageRef;
 
 
-    private  DatabaseReference reference;
-    private  FirebaseDatabase mfirebaseDatabase = FirebaseDatabase.getInstance();
-    public ArrayList<Offers> list = new ArrayList<Offers>();
+    public DatabaseReference reference;
+    public  FirebaseDatabase mfirebaseDatabase = FirebaseDatabase.getInstance();
+
 
     private static final FirebaseUtil ourInstance = new FirebaseUtil();
     private static Boolean isAdmin = false;
-    public Adapter adapter;
+
     private Boolean open = false;
+    public ArrayList<Offers> list ;
 
     public static FirebaseUtil getInstance()
     {
@@ -71,11 +76,14 @@ public class FirebaseUtil
                     {
                         Signin();
 
-                        Toast.makeText(activity.getBaseContext(), "Welcome Back", Toast.LENGTH_LONG);
-                         checkadmin(mAuth.getUid());
 
 
 
+
+                    }
+                    else
+                    {
+                        checkadmin();
                     }
 
 
@@ -85,40 +93,11 @@ public class FirebaseUtil
             };
 
             reference = mfirebaseDatabase.getReference().child(refer);
-            reference.addChildEventListener(new ChildEventListener() {
-                @Override
-                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                    Offers offers = dataSnapshot.getValue(Offers.class);
-                    offers.setId(dataSnapshot.getKey());
-                    list.add(offers);
-                    adapter.notifyDataSetChanged();
 
-                }
-
-                @Override
-                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-                }
-
-                @Override
-                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-                }
-
-                @Override
-                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-  open = true;
+            open = true;
             ConnectStorage("Deals");
         }
-
+        list = new ArrayList<>();
 
 
     }
@@ -130,8 +109,31 @@ public class FirebaseUtil
 
     }
 
-    private void checkadmin(String uid)
+
+    private void Signin()
     {
+        // Choose authentication providers
+        List<AuthUI.IdpConfig> providers = Arrays.asList(
+                new AuthUI.IdpConfig.EmailBuilder().build(),
+                new AuthUI.IdpConfig.GoogleBuilder().build());
+        MainActivity mainActivity = (MainActivity) activity;
+// Create and launch sign-in intent
+        mainActivity.startActivityForResult(
+                AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setIsSmartLockEnabled(false)
+                        .setAvailableProviders(providers)
+                        .build(),
+                RC_SIGN_IN);
+
+
+
+    }
+
+    public  void checkadmin()
+    {
+        String uid = mAuth.getUid();
+
         setAdmin(false);
         DatabaseReference reference = mfirebaseDatabase.getReference().child("Admin").child(uid);
         reference.addChildEventListener(new ChildEventListener() {
@@ -139,7 +141,8 @@ public class FirebaseUtil
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s)
             {
                 setAdmin(true);
-
+                MainActivity mainActivity = (MainActivity) activity;
+                mainActivity.showMenu();
                 Log.d("Admin","You are admin");
             }
 
@@ -163,25 +166,9 @@ public class FirebaseUtil
 
             }
         });
-
     }
 
-    private void Signin()
-    {
-        // Choose authentication providers
-        List<AuthUI.IdpConfig> providers = Arrays.asList(
-                new AuthUI.IdpConfig.EmailBuilder().build(),
-                new AuthUI.IdpConfig.GoogleBuilder().build());
 
-// Create and launch sign-in intent
-        activity.startActivityForResult(
-                AuthUI.getInstance()
-                        .createSignInIntentBuilder()
-                        .setAvailableProviders(providers)
-                        .build(),
-                RC_SIGN_IN);
-
-    }
 
     public void Signoff()
     {
@@ -189,10 +176,11 @@ public class FirebaseUtil
                 .signOut(activity)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     public void onComplete(@NonNull Task<Void> task) {
-                        activity.finish();
-                        System.exit(0);
+                     attachListener();
+
                     }
                 });
+        dettachListener();
     }
 
     public void del(String pos)
@@ -216,7 +204,7 @@ public class FirebaseUtil
     }
     public void dettachListener()
     {
-        mAuth.addAuthStateListener(authStateListener);
+        mAuth.removeAuthStateListener(authStateListener);
     }
 
     public Boolean getAdmin() {
@@ -239,10 +227,4 @@ public class FirebaseUtil
       mStorageRef.child(offers.getName()).delete();
     }
 
-    public StorageReference getImage(String name)
-    {
-          return mStorageRef.child(name);
-
-
-    }
 }

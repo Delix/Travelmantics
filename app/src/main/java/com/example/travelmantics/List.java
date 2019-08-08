@@ -23,36 +23,21 @@ import android.view.ViewGroup;
  */
 public class List extends Fragment
 {
-     iSwitch iswitch;
-     Adapter adapter;
-     RecyclerView recyclerView;
+     private  iSwitch iswitch;
 
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-
-        iswitch.settoolbar("List of Deals");
+    private RecyclerView recyclerView;
+     View view;
 
 
 
-
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState)
     {
-        View view =inflater.inflate(R.layout.fragment_list, container, false);
+         view =inflater.inflate(R.layout.fragment_list, container, false);
         setHasOptionsMenu(true);
-        recyclerView =  view.findViewById(R.id.Listview);
-        adapter = new Adapter(this.getContext(),iswitch);
-        iswitch.getlist().adapter = adapter;
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this.getContext());
-        recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(adapter);
+
 
 
         // Inflate the layout for this fragment
@@ -62,10 +47,19 @@ public class List extends Fragment
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
     {
-        menu = iswitch.getMenu();
-        menu.findItem(R.id.Del).setVisible(false);
-        menu.findItem(R.id.Save).setVisible(false);
+
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        recyclerView =  view.findViewById(R.id.Listview);
+        final Adapter adapter = new Adapter(this.getContext(),iswitch);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this.getContext());
+        recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.setAdapter(adapter);
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
